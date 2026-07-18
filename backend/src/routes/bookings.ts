@@ -12,11 +12,17 @@ import {
 
 
 
-import validateRequiredFields from '../middleware/validate';    
+import validateRequiredFields from '../middleware/validate';   
+import protect from '../middleware/auth'; 
 
 
 const router = Router();
 
+router.post(
+  '/',
+  protect,
+  createBooking
+);
 
 router.post(
   '/',

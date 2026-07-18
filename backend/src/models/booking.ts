@@ -1,6 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+
 export interface IBooking extends Document {
+
+  user: mongoose.Types.ObjectId;
   customerName: string;
   email: string;
   phone: string;
@@ -15,8 +18,20 @@ export interface IBooking extends Document {
   status: string;
 }
 
+
 const bookingSchema = new Schema<IBooking>(
   {
+
+
+
+    user: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'User',
+  required: true,
+},
+
+
+
     customerName: {
       type: String,
       required: true,

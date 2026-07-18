@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import bookingRoutes from './routes/bookings';
 import errorHandler from './middleware/erroshandler';
+import authRoutes from './routes/auth';
 
 // Routes
 import serviceRoutes from './routes/services';
@@ -22,6 +23,7 @@ app.use(cookieParser());
 // API Routes
 app.use('/api/services', serviceRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/auth', authRoutes);
 
 // Root Route
 app.get('/', (_req: Request, res: Response) => {

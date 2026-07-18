@@ -4,7 +4,9 @@ import asyncHandler from '../utils/asyncHandler';
 
 // GET ALL BOOKINGS
 export const getBookings = asyncHandler(async (_req: Request, res: Response) => {
-  const bookings = await Booking.find().populate('service');
+ const bookings = await Booking.find()
+  .populate('user', 'name email phone')
+  .populate('service', 'name category price duration image');
 
   res.status(200).json({
     success: true,
@@ -15,7 +17,9 @@ export const getBookings = asyncHandler(async (_req: Request, res: Response) => 
 
 // GET BOOKING BY ID
 export const getBookingById = asyncHandler(async (req: Request, res: Response) => {
-  const booking = await Booking.findById(req.params.id).populate('service');
+ const booking = await Booking.findById(req.params.id)
+  .populate('user', 'name email phone')
+  .populate('service', 'name category price duration image');
 
   if (!booking) {
     const error: any = new Error('Booking not found');
