@@ -1,0 +1,8 @@
+{
+  "name": "services-com",
+  "private": true,
+  "version": "1.0.0",
+  "description": "ServiceSquare Project",
+  "scripts": {},
+  "license": "MIT"
+}
