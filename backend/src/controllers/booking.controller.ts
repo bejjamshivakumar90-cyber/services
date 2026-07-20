@@ -451,3 +451,46 @@ export const deleteBooking = asyncHandler(
     });
   }
 );
+
+export const getCustomerStats = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+
+    const customerId = req.params.id;
+
+    const bookings = await Booking.find({
+      user: customerId,
+    });
+
+    const totalBookings = bookings.length;
+
+    const completed = bookings.filter(
+      booking => booking.status === "Completed"
+    ).length;
+
+    const cancelled = bookings.filter(
+      booking => booking.status === "Cancelled"
+    ).length;
+
+    res.json({
+      success: true,
+      stats: {
+        totalBookings,
+        completed,
+        cancelled
+      }
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+
+  }
+};

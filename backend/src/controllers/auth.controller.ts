@@ -140,3 +140,57 @@ if (!user) {
     });
   }
 );
+export const getUsers = async (_req: Request, res: Response) => {
+  try {
+    const users = await User.find().select("-password");
+
+    res.status(200).json({
+      success: true,
+      users,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+export const getUserById = async (
+  req: Request,
+  res: Response
+) => {
+
+  try {
+
+    const user = await User.findById(req.params.id)
+      .select("-password");
+
+
+    if (!user) {
+
+      return res.status(404).json({
+        success:false,
+        message:"User not found"
+      });
+
+    }
+
+
+    res.json({
+      success:true,
+      user
+    });
+
+
+  } catch(error) {
+
+    res.status(500).json({
+      success:false,
+      message:"Server error"
+    });
+
+  }
+
+};

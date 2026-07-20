@@ -11,10 +11,12 @@ import {
 updateBookingStatus,
 getMyBookings,
 cancelMyBooking,
+getCustomerStats,
 } from '../controllers/booking.controller';
 
 import protect from '../middleware/auth';
 import admin from '../middleware/admin';
+
 
 const router = Router();
 
@@ -40,6 +42,13 @@ router.put(
 
 // View All Bookings
 router.get('/', protect, admin, getBookings);
+
+router.get(
+"/customer/:id/stats",
+protect,
+admin,
+getCustomerStats
+);
 
 // View Single Booking
 router.get('/:id', protect, admin, getBookingById);
