@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '../models/user';
 
-interface AuthRequest extends Request {
+import User from '../models/user';
+import Technician from '../models/technician';
+
+export interface AuthRequest extends Request {
   user?: any;
 }
 
@@ -11,14 +13,11 @@ const protect = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-
   try {
 
-    const token =
-      req.headers.authorization?.split(' ')[1];
+    const authHeader = req.headers.authorization;
 
-
-    if (!token) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({
         success: false,
         message: 'Not authorized, token missing',
@@ -26,31 +25,34 @@ const protect = async (
       return;
     }
 
+    const token = authHeader.split(' ')[1];
 
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET as string
     ) as { id: string };
 
+    const user = await User.findById(decoded.id).select('-password');
 
-    const user = await User.findById(
-      decoded.id
-    ).select('-password');
+if (user) {
+  req.user = user;
+  return next();
+}
 
+const technician = await Technician.findById(decoded.id).select('-password');
 
-    if (!user) {
-      res.status(401).json({
-        success: false,
-        message: 'User not found',
-      });
-      return;
-    }
+if (technician) {
+  req.user = technician;
+  return next();
+}
 
-
-    req.user = user;
+res.status(401).json({
+  success: false,
+  message: 'Account not found',
+});
+return;
 
     next();
-
 
   } catch (error) {
 
@@ -61,6 +63,5 @@ const protect = async (
 
   }
 };
-
 
 export default protect;

@@ -1,36 +1,37 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-
 export interface IBooking extends Document {
-
   user: mongoose.Types.ObjectId;
+
   customerName: string;
   email: string;
   phone: string;
+
   service: mongoose.Types.ObjectId;
+  technician?: mongoose.Types.ObjectId;
+
   address: string;
   city: string;
   pincode: string;
+
   bookingDate: Date;
   bookingTime: string;
+
   problem: string;
   image?: string;
+
   status: string;
 }
 
 
+
 const bookingSchema = new Schema<IBooking>(
   {
-
-
-
     user: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: 'User',
-  required: true,
-},
-
-
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
 
     customerName: {
       type: String,
@@ -54,6 +55,12 @@ const bookingSchema = new Schema<IBooking>(
       type: Schema.Types.ObjectId,
       ref: 'Service',
       required: true,
+    },
+
+    technician: {
+      type: Schema.Types.ObjectId,
+      ref: 'Technician',
+      default: null,
     },
 
     address: {
@@ -95,6 +102,7 @@ const bookingSchema = new Schema<IBooking>(
       type: String,
       enum: [
         'Pending',
+        'Assigned',
         'Accepted',
         'On The Way',
         'In Progress',

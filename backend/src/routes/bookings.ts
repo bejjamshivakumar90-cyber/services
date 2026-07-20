@@ -6,54 +6,45 @@ import {
   createBooking,
   updateBooking,
   deleteBooking,
+  assignTechnician,
+  acceptBooking,
+updateBookingStatus,
 } from '../controllers/booking.controller';
 
-
-
-
-
-import validateRequiredFields from '../middleware/validate';   
-import protect from '../middleware/auth'; 
-
+import protect from '../middleware/auth';
+import admin from '../middleware/admin';
 
 const router = Router();
 
-router.post(
-  '/',
-  protect,
-  createBooking
-);
+// =========================
+// Customer
+// =========================
 
-router.post(
-  '/',
-  validateRequiredFields([
-    'customerName',
-    'email',
-    'phone',
-    'service',
-    'address',
-    'city',
-    'pincode',
-    'bookingDate',
-    'bookingTime',
-    'problem',
-  ]),
-  createBooking
-);
+// Create Booking (Login Required)
+router.post('/', protect, createBooking);
 
-// GET all bookings
-router.get('/', getBookings);
+// =========================
+// Admin
+// =========================
 
-// GET booking by ID
-router.get('/:id', getBookingById);
+// View All Bookings
+router.get('/', protect, admin, getBookings);
 
-// CREATE booking
-router.post('/', createBooking);
+// View Single Booking
+router.get('/:id', protect, admin, getBookingById);
 
-// UPDATE booking
-router.put('/:id', updateBooking);
+// Update Booking
+router.put('/:id', protect, admin, updateBooking);
 
-// DELETE booking
-router.delete('/:id', deleteBooking);
+// Delete Booking
+router.delete('/:id', protect, admin, deleteBooking);
+
+// Assign Technician
+router.put('/:id/assign', protect, admin, assignTechnician);
+ 
+// Technician
+router.put('/:id/accept', protect, acceptBooking);
+
+router.put('/:id/status', protect, updateBookingStatus);
 
 export default router;

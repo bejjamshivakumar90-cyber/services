@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import bookingRoutes from './routes/bookings';
 import errorHandler from './middleware/erroshandler';
 import authRoutes from './routes/auth';
+import technicianRoutes from './routes/technicians';
 
 // Routes
 import serviceRoutes from './routes/services';
@@ -24,6 +25,7 @@ app.use(cookieParser());
 app.use('/api/services', serviceRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/technicians', technicianRoutes);
 
 // Root Route
 app.get('/', (_req: Request, res: Response) => {
