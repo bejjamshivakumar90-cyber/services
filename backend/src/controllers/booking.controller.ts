@@ -71,6 +71,96 @@ export const createBooking = asyncHandler(
 );
 
 // =============================
+// CUSTOMER - MY BOOKINGS
+// =============================
+export const getMyBookings = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+
+    const bookings = await Booking.find({
+      user: req.user._id,
+    })
+      .populate(
+        "service",
+        "name category price image"
+      )
+      .populate(
+        "technician",
+        "name phone profession rating"
+      )
+      .sort({
+        createdAt: -1,
+      });
+
+    res.status(200).json({
+      success: true,
+      count: bookings.length,
+      bookings,
+    });
+
+  }
+);
+
+
+// =============================
+// CUSTOMER CANCEL BOOKING
+// =============================
+export const cancelMyBooking = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+      return;
+    }
+
+    // Customer can cancel only their own booking
+    if (booking.user.toString() !== req.user._id.toString()) {
+      res.status(403).json({
+        success: false,
+        message: "You cannot cancel this booking",
+      });
+      return;
+    }
+
+    // Prevent cancelling completed bookings
+    if (booking.status === "Completed") {
+      res.status(400).json({
+        success: false,
+        message: "Completed bookings cannot be cancelled",
+      });
+      return;
+    }
+
+    // Prevent duplicate cancellation
+    if (booking.status === "Cancelled") {
+      res.status(400).json({
+        success: false,
+        message: "Booking already cancelled",
+      });
+      return;
+    }
+
+    booking.status = "Cancelled";
+
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Booking cancelled successfully",
+      booking,
+    });
+
+  }
+);
+
+
+
+
+// =============================
 // UPDATE BOOKING
 // =============================
 export const updateBooking = asyncHandler(
@@ -106,33 +196,85 @@ export const updateBooking = asyncHandler(
 // =============================
 // ASSIGN TECHNICIAN
 // =============================
+import Technician from '../models/technician';
+import booking from '../models/booking';
+
 export const assignTechnician = asyncHandler(
   async (req: Request, res: Response) => {
     const { technicianId } = req.body;
 
-    const booking = await Booking.findByIdAndUpdate(
-      req.params.id,
-      {
-        technician: technicianId,
-        status: 'Assigned',
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    )
-      .populate('user', 'name email phone')
-      .populate('service', 'name category price duration image')
-      .populate(
-        'technician',
-        'name phone profession city isAvailable rating'
-      );
+    // Technician ID required
+    if (!technicianId) {
+      res.status(400).json({
+        success: false,
+        message: 'Technician ID is required',
+      });
+      return;
+    }
+
+    // Find booking
+    const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
-      const error: any = new Error('Booking not found');
-      error.status = 404;
-      throw error;
+      res.status(404).json({
+        success: false,
+        message: 'Booking not found',
+      });
+      return;
     }
+
+    // Prevent reassignment of finished bookings
+    if (
+      booking.status === 'Completed' ||
+      booking.status === 'Cancelled'
+    ) {
+      res.status(400).json({
+        success: false,
+        message: `Cannot assign technician. Booking is already ${booking.status}.`,
+      });
+      return;
+    }
+
+    // Find technician
+    const technician = await Technician.findById(technicianId);
+
+    if (!technician) {
+      res.status(404).json({
+        success: false,
+        message: 'Technician not found',
+      });
+      return;
+    }
+
+    // Technician availability
+    if (!technician.isAvailable) {
+      res.status(400).json({
+        success: false,
+        message: 'Technician is currently unavailable',
+      });
+      return;
+    }
+
+    // Assign technician
+    booking.technician = technician._id;
+    booking.status = 'Assigned';
+
+    await booking.save();
+
+    await booking.populate([
+      {
+        path: 'user',
+        select: 'name email phone',
+      },
+      {
+        path: 'service',
+        select: 'name category price duration image',
+      },
+      {
+        path: 'technician',
+        select: 'name phone profession city rating isAvailable',
+      },
+    ]);
 
     res.status(200).json({
       success: true,
@@ -141,32 +283,68 @@ export const assignTechnician = asyncHandler(
     });
   }
 );
-
 // =============================
 // TECHNICIAN ACCEPTS BOOKING
 // =============================
 export const acceptBooking = asyncHandler(
-  async (req: Request, res: Response) => {
-    const booking = await Booking.findByIdAndUpdate(
-      req.params.id,
-      { status: 'Accepted' },
-      { new: true, runValidators: true }
-    )
-      .populate('user', 'name email phone')
-      .populate('service', 'name category')
-      .populate('technician', 'name profession');
+  async (req: AuthRequest, res: Response) => {
+
+    const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
-      const error: any = new Error('Booking not found');
-      error.status = 404;
-      throw error;
+      res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+      return;
     }
+
+    // Booking must be assigned first
+    if (!booking.technician) {
+      res.status(400).json({
+        success: false,
+        message: "Booking has not been assigned",
+      });
+      return;
+    }
+
+    // Only assigned technician can accept
+    if (
+      booking.technician.toString() !==
+      req.user._id.toString()
+    ) {
+      res.status(403).json({
+        success: false,
+        message: "You are not assigned to this booking",
+      });
+      return;
+    }
+
+    booking.status = "Accepted";
+
+    await booking.save();
+
+    await booking.populate([
+      {
+        path: "user",
+        select: "name email phone",
+      },
+      {
+        path: "service",
+        select: "name category",
+      },
+      {
+        path: "technician",
+        select: "name profession",
+      },
+    ]);
 
     res.status(200).json({
       success: true,
-      message: 'Booking accepted',
+      message: "Booking accepted",
       booking,
     });
+
   }
 );
 
@@ -174,7 +352,7 @@ export const acceptBooking = asyncHandler(
 // UPDATE BOOKING STATUS
 // =============================
 export const updateBookingStatus = asyncHandler(
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const { status } = req.body;
 
     const allowedStatuses = [
@@ -192,20 +370,59 @@ export const updateBookingStatus = asyncHandler(
       return;
     }
 
-    const booking = await Booking.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true, runValidators: true }
-    )
-      .populate('user', 'name email phone')
-      .populate('service', 'name category')
-      .populate('technician', 'name profession');
+    const booking = await Booking.findById(req.params.id);
 
-    if (!booking) {
-      const error: any = new Error('Booking not found');
-      error.status = 404;
-      throw error;
-    }
+if (!booking) {
+  res.status(404).json({
+    success: false,
+    message: "Booking not found",
+  });
+  return;
+}
+
+// Only assigned technician can update
+if (
+  booking.technician?.toString() !==
+  req.user._id.toString()
+) {
+  res.status(403).json({
+    success: false,
+    message: "You are not assigned to this booking",
+  });
+  return;
+}
+
+// Don't allow updates after completion
+if (
+  booking.status === "Completed" ||
+  booking.status === "Cancelled"
+) {
+  res.status(400).json({
+    success: false,
+    message: `Booking already ${booking.status}`,
+  });
+  return;
+}
+
+// Update status
+booking.status = status;
+
+await booking.save();
+
+await booking.populate([
+  {
+    path: "user",
+    select: "name email phone",
+  },
+  {
+    path: "service",
+    select: "name category",
+  },
+  {
+    path: "technician",
+    select: "name profession",
+  },
+]);
 
     res.status(200).json({
       success: true,

@@ -370,6 +370,49 @@ export const updateAvailability = async (
   }
 };
 
+
+// =========================================
+// Get My Assigned Bookings
+// =========================================
+export const getMyBookings = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+
+    const bookings = await Booking.find({
+      technician: req.user._id,
+    })
+      .populate(
+        "service",
+        "name category price duration image"
+      )
+      .populate(
+        "user",
+        "name phone email"
+      )
+      .sort({
+        createdAt: -1,
+      });
+
+    res.status(200).json({
+      success: true,
+      count: bookings.length,
+      bookings,
+    });
+
+  } catch (error: any) {
+
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
 // =========================================
 // Get Assigned Bookings
 // =========================================

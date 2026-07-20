@@ -77,19 +77,33 @@ export const loginUser = asyncHandler(
 
 
     const user = await User.findOne({
-      email,
-    });
+  email,
+});
 
+console.log("===== ADMIN LOGIN DEBUG =====");
+console.log("Email Received:", email);
+console.log("User Found:", !!user);
 
-    if (!user) {
-      const error: any = new Error(
-        'Invalid email or password'
-      );
+if (user) {
+  console.log("DB Email:", user.email);
+  console.log("DB Role:", user.role);
 
-      error.status = 401;
-      throw error;
-    }
+  const match = await bcrypt.compare(
+    password,
+    user.password
+  );
 
+  console.log("Password Match:", match);
+}
+
+if (!user) {
+  const error: any = new Error(
+    'Invalid email or password'
+  );
+
+  error.status = 401;
+  throw error;
+}
 
     const isPasswordMatch =
       await bcrypt.compare(

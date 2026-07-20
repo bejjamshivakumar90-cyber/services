@@ -9,6 +9,8 @@ import {
   assignTechnician,
   acceptBooking,
 updateBookingStatus,
+getMyBookings,
+cancelMyBooking,
 } from '../controllers/booking.controller';
 
 import protect from '../middleware/auth';
@@ -22,6 +24,15 @@ const router = Router();
 
 // Create Booking (Login Required)
 router.post('/', protect, createBooking);
+
+// Customer - My Bookings
+router.get("/my-bookings", protect, getMyBookings);
+
+router.put(
+  "/my-bookings/:id/cancel",
+  protect,
+  cancelMyBooking
+);
 
 // =========================
 // Admin
