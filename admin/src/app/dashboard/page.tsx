@@ -7,11 +7,14 @@ import API_URL from "@/lib/api";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
-    users: 0,
-    services: 0,
-    bookings: 0,
-    technicians: 0,
-  });
+  customers: 0,
+  services: 0,
+  technicians: 0,
+  bookings: 0,
+  pending: 0,
+  completed: 0,
+  cancelled: 0,
+});
 
   useEffect(() => {
     loadStats();
@@ -49,14 +52,24 @@ export default function DashboardPage() {
       const bookings = await bookingsRes.json();
 
 
+      const totalCustomers = users.users?.filter((user: any) => user.role === "customer").length || 0;
+      const totalServices = services.services?.length || 0;
+      const totalTechnicians = technicians.technicians?.length || 0;
+      const totalBookings = bookings.bookings?.length || 0;
+
+      const pending = bookings.bookings?.filter((b: any) => b.status === "pending").length || 0;
+      const completed = bookings.bookings?.filter((b: any) => b.status === "completed").length || 0;
+      const cancelled = bookings.bookings?.filter((b: any) => b.status === "cancelled").length || 0;
+
       setStats({
-    users: users.users?.filter(
-  (user:any) => user.role === "customer"
-).length || 0,
-     services: services.services?.length || 0,
-     technicians: technicians.technicians?.length || 0,
-     bookings: bookings.bookings?.length || 0,
-});
+        customers: totalCustomers,
+        services: totalServices,
+        technicians: totalTechnicians,
+        bookings: totalBookings,
+        pending,
+        completed,
+        cancelled,
+      });
     } catch (error) {
       console.log("Dashboard loading error:", error);
     }
@@ -77,16 +90,21 @@ export default function DashboardPage() {
       </div>
 
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-
+     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         <StatCard
-          title="Total Users"
-          value={stats.users}
+          title="Total Customers"
+          value={stats.customers}
         />
 
         <StatCard
           title="Services"
           value={stats.services}
+        />
+
+      
+        <StatCard
+          title="Technicians"
+          value={stats.technicians}
         />
 
         <StatCard
@@ -95,8 +113,18 @@ export default function DashboardPage() {
         />
 
         <StatCard
-          title="Technicians"
-          value={stats.technicians}
+          title="Pending Bookings"
+          value={stats.pending}
+        />
+
+        <StatCard
+          title="Completed Bookings"
+          value={stats.completed}
+        />
+
+        <StatCard
+          title="Cancelled Bookings"
+          value={stats.cancelled}
         />
 
       </div>
