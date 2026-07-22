@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Cookies from "js-cookie";
 import API_URL from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 
 interface Customer {
@@ -25,6 +26,7 @@ const [loading,setLoading]=useState(true);
 const [search, setSearch] = useState("");
 const [filter, setFilter] = useState("");
 const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
+const router = useRouter();
 
 
 
@@ -212,6 +214,33 @@ Manage your registered customers
     "
   />
 </div>
+
+
+
+
+
+
+
+
+<div className="mt-4">
+  <button
+    onClick={() => router.back()}
+    className="
+      px-5
+      py-3
+      rounded-xl
+      border
+      bg-white
+      hover:bg-gray-100
+      transition
+      font-medium
+    "
+  >
+    ← Back
+  </button>
+</div>
+
+
 
 
 

@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Cookies from "js-cookie";
 import API_URL from "@/lib/api";
+import AddServiceModal from "@/components/services/AddServiceModal";
+import { useRouter } from "next/navigation";
 
 
 interface Service {
@@ -26,6 +28,8 @@ const [loading, setLoading] = useState(true);
 
 const [search, setSearch] = useState("");
 const [filter, setFilter] = useState("all");
+const [showAddModal, setShowAddModal] = useState(false);
+const router = useRouter();
 
 
 
@@ -55,6 +59,43 @@ async function loadServices() {
     console.log(error);
   } finally {
     setLoading(false);
+  }
+}
+
+async function createService(service: {
+  name: string;
+  category: string;
+  description: string;
+  price: number;
+  duration: string;
+  image: string;
+}) {
+  try {
+    const token = Cookies.get("token");
+
+    const res = await fetch(`${API_URL}/services`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(service),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("Service added successfully.");
+
+      setShowAddModal(false);
+
+      await loadServices();
+    } else {
+      alert(data.message || "Unable to create service.");
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong.");
   }
 }
 
@@ -128,37 +169,53 @@ useEffect(() => {
 
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
 
-        <div>
+  <div>
+    <h1 className="text-4xl font-bold">
+      Services
+    </h1>
 
-          <h1 className="text-4xl font-bold">
-            Services
-          </h1>
+    <p className="text-gray-500 mt-2">
+      Manage all available services
+    </p>
+  </div>
 
-          <p className="text-gray-500 mt-2">
-            Manage all available services
-          </p>
+  <div className="flex items-center gap-3">
 
-        </div>
+  <button
+    onClick={() => router.back()}
+    className="
+      px-5
+      py-3
+      rounded-xl
+      border
+      bg-white
+      hover:bg-gray-100
+      transition
+    "
+  >
+    ← Back
+  </button>
 
-        <Link href="/services/add">
+  <button
+    onClick={() => setShowAddModal(true)}
+    className="
+      bg-black
+      text-white
+      px-6
+      py-3
+      rounded-xl
+      hover:bg-gray-800
+      transition
+    "
+  >
+    + Add Service
+  </button>
 
-          <button
-            className="
-            bg-black
-            text-white
-            px-6
-            py-3
-            rounded-xl
-            hover:bg-gray-800
-            transition
-            "
-          >
-            + Add Service
-          </button>
+</div>
 
-        </Link>
+</div>
 
-      </div>
+  
 
 
 
@@ -353,6 +410,42 @@ useEffect(() => {
   </Link>
 
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<AddServiceModal
+  open={showAddModal}
+  onClose={() => setShowAddModal(false)}
+  onSave={createService}
+/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                   </td>
                 </tr>
               ))
@@ -362,6 +455,7 @@ useEffect(() => {
       </div>
 
     </div>
+
 
   );
 

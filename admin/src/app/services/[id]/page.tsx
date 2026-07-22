@@ -1,7 +1,16 @@
 "use client";
 
+import EditServiceModal from "@/components/services/EditServiceModal";
+import PriceModal from "@/components/services/PriceModal";
+import DurationModal from "@/components/services/DurationModal";
+import DescriptionModal from "@/components/services/DescriptionModal";
+import ImageModal from "@/components/services/ImageModal";
+import StatusModal from "@/components/services/StatusModal";
+import DeleteModal from "@/components/services/DeleteModal";
+import AddServiceModal from "@/components/services/AddServiceModal";
+
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Cookies from "js-cookie";
 import API_URL from "@/lib/api";
@@ -21,18 +30,20 @@ interface Service {
 
 export default function ServiceDetailsPage() {
   const params = useParams();
+  const router = useRouter();
 
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
-const [editMode, setEditMode] = useState(false);
 
-const [price, setPrice] = useState("");
-const [duration, setDuration] = useState("");
-const [description, setDescription] = useState("");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showPriceModal, setShowPriceModal] = useState(false);
+  const [showDurationModal, setShowDurationModal] = useState(false);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-const [showPrice, setShowPrice] = useState(false);
-const [showDuration, setShowDuration] = useState(false);
-const [showDescription, setShowDescription] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     loadService();
@@ -42,27 +53,15 @@ const [showDescription, setShowDescription] = useState(false);
     try {
       const token = Cookies.get("token");
 
-      const res = await fetch(
-        `${API_URL}/services/${params.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(`${API_URL}/services/${params.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await res.json();
 
       if (data.success) {
-
-
-
-        setPrice(data.service.price.toString());
-setDuration(data.service.duration);
-setDescription(data.service.description);
-
-
-
         setService(data.service);
       }
     } catch (error) {
@@ -72,53 +71,135 @@ setDescription(data.service.description);
     }
   }
 
+
+
+
+
+
+  async function createService(service: {
+  name: string;
+  category: string;
+  description: string;
+  price: number;
+  duration: string;
+  image: string;
+}) {
+  try {
+    const token = Cookies.get("token");
+
+    const res = await fetch(`${API_URL}/services`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(service),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("Service added successfully.");
+
+      setShowAddModal(false);
+
+      await loadService();
+    } else {
+      alert(data.message || "Unable to create service.");
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong.");
+  }
+}
+
+
+
+
+
+
+  async function updateService(updatedFields: Partial<Service>) {
+    try {
+      const token = Cookies.get("token");
+
+      const res = await fetch(`${API_URL}/services/${service?._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedFields),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setService(data.service);
+        alert("Service updated successfully.");
+      } else {
+        alert(data.message || "Update failed.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong.");
+    }
+  }
+
+  async function updateImage(payload: any) {
+    // delegate to updateService - ImageModal should provide proper fields (e.g. image)
+    await updateService(payload);
+  }
+
+  async function deleteService() {
+    try {
+      const token = Cookies.get("token");
+
+      const res = await fetch(`${API_URL}/services/${service?._id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("Service deleted.");
+        router.push("/services");
+      } else {
+        alert(data.message || "Delete failed.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong.");
+    }
+  }
+
   if (loading) {
-    return (
-      <div className="p-8 text-center">
-        Loading...
-      </div>
-    );
+    return <div className="p-8 text-center">Loading...</div>;
   }
 
   if (!service) {
-    return (
-      <div className="p-8 text-center">
-        Service not found.
-      </div>
-    );
+    return <div className="p-8 text-center">Service not found.</div>;
   }
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-
       <div className="flex items-center justify-between">
-
         <div>
-
-          <h1 className="text-4xl font-bold">
-            {service.name}
-          </h1>
-
-          <p className="text-gray-500 mt-2">
-            Service Details
-          </p>
-
+          <h1 className="text-4xl font-bold">{service.name}</h1>
+          <p className="text-gray-500 mt-2">Service Details</p>
         </div>
 
         <Link href="/services">
-
           <button className="px-5 py-3 rounded-xl bg-gray-100 hover:bg-gray-200">
             ← Back
           </button>
-
         </Link>
-
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-
         <div className="bg-white rounded-3xl shadow p-6">
-
           {service.image ? (
             <img
               src={service.image}
@@ -130,13 +211,10 @@ setDescription(data.service.description);
               🛠
             </div>
           )}
-
         </div>
 
         <div className="lg:col-span-2 bg-white rounded-3xl shadow p-8">
-
           <div className="grid md:grid-cols-2 gap-6">
-
             <div>
               <p className="text-gray-500 text-sm">Category</p>
               <h3 className="text-xl font-semibold">{service.category}</h3>
@@ -154,7 +232,6 @@ setDescription(data.service.description);
 
             <div>
               <p className="text-gray-500 text-sm">Status</p>
-
               <span
                 className={`inline-flex px-4 py-2 rounded-full text-sm font-semibold ${
                   service.isActive
@@ -164,406 +241,148 @@ setDescription(data.service.description);
               >
                 {service.isActive ? "Active" : "Inactive"}
               </span>
-
             </div>
-
           </div>
 
           <div className="mt-8">
-
-            <h3 className="font-bold text-xl">
-              Description
-            </h3>
-
-            <p className="mt-3 text-gray-600 leading-8">
-              {service.description}
-            </p>
-
+            <h3 className="font-bold text-xl">Description</h3>
+            <p className="mt-3 text-gray-600 leading-8">{service.description}</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mt-8">
-
             <div>
-
-              <p className="text-gray-500 text-sm">
-                Created
-              </p>
-
+              <p className="text-gray-500 text-sm">Created</p>
               <p>
                 {service.createdAt
                   ? new Date(service.createdAt).toLocaleDateString()
                   : "-"}
               </p>
-
             </div>
 
             <div>
-
-              <p className="text-gray-500 text-sm">
-                Last Updated
-              </p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-{/* SERVICE MANAGEMENT */}
-
-<div className="mt-10 border-t pt-8">
-
-<h2 className="text-2xl font-bold">
-Service Management
-</h2>
-
-
-  <p className="text-gray-500 mt-2">
-    Manage this service from one place.
-  </p>
-
-  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mt-8">
-
-    {/* Edit */}
-
-    <button
-onClick={()=>setEditMode(!editMode)}
-className="
-bg-blue-600
-text-white
-rounded-xl
-py-4
-font-semibold
-hover:bg-blue-700
-transition
-"
->
-✏ Edit Service
-</button>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-{
-editMode && (
-
-<div className="mt-8 bg-gray-50 rounded-2xl p-6 space-y-4">
-
-<h3 className="text-xl font-bold">
-Edit Service
-</h3>
-
-
-<input
-className="w-full p-3 rounded-xl border"
-placeholder="Service name"
-/>
-
-
-<input
-className="w-full p-3 rounded-xl border"
-placeholder="Category"
-/>
-
-
-<button
-className="
-bg-black
-text-white
-px-6
-py-3
-rounded-xl
-"
->
-Save Changes
-</button>
-
-
-</div>
-
-)
-}
-
-
-
-
-
-
-
-
-
-    <button
-onClick={()=>setShowPrice(!showPrice)}
-className="
-bg-green-600
-text-white
-rounded-xl
-py-4
-font-semibold
-hover:bg-green-700
-transition
-"
->
-💰 Update Price
-</button>
-  
-
-  {
-showPrice && (
-
-<div className="mt-5 bg-green-50 p-6 rounded-2xl">
-
-<h3 className="font-bold">
-Update Price
-</h3>
-
-
-<input
-value={price}
-onChange={(e)=>setPrice(e.target.value)}
-className="mt-3 p-3 rounded-xl border w-full"
-/>
-
-
-<button
-className="
-mt-4
-bg-green-600
-text-white
-px-5
-py-2
-rounded-xl
-"
->
-Save Price
-</button>
-
-
-</div>
-
-)
-}
-
-    <button
-onClick={()=>setShowDuration(!showDuration)}
-className="
-bg-purple-600
-text-white
-rounded-xl
-py-4
-font-semibold
-hover:bg-purple-700
-transition
-"
->
-⏱ Update Duration
-</button>
-
-
-{
-showDuration && (
-
-<div className="mt-5 bg-purple-50 p-6 rounded-2xl">
-
-<h3 className="font-bold">
-Update Duration
-</h3>
-
-
-<input
-value={duration}
-onChange={(e)=>setDuration(e.target.value)}
-className="mt-3 p-3 rounded-xl border w-full"
-/>
-
-
-<button
-className="
-mt-4
-bg-purple-600
-text-white
-px-5
-py-2
-rounded-xl
-"
->
-Save Duration
-</button>
-
-
-</div>
-
-)
-}
-
-
-
-<button
-onClick={()=>setShowDescription(!showDescription)}
-className="
-bg-indigo-600
-text-white
-rounded-xl
-py-4
-font-semibold
-hover:bg-indigo-700
-transition
-"
->
-📝 Update Description
-</button>
-
-
- <button
-className="
-bg-orange-500
-text-white
-rounded-xl
-py-4
-font-semibold
-hover:bg-orange-600
-transition
-"
->
-🖼 Change Image
-</button>
-
-
-
-{
-showDescription && (
-
-<div className="mt-5 bg-indigo-50 p-6 rounded-2xl">
-
-<h3 className="font-bold">
-Update Description
-</h3>
-
-
-<textarea
-value={description}
-onChange={(e)=>setDescription(e.target.value)}
-className="
-mt-3
-p-3
-rounded-xl
-border
-w-full
-h-32
-"
-/>
-
-
-<button
-className="
-mt-4
-bg-indigo-600
-text-white
-px-5
-py-2
-rounded-xl
-"
->
-Save Description
-</button>
-
-
-</div>
-
-)
-}
-
-
-
-<button
-className="
-bg-yellow-500
-text-white
-rounded-xl
-py-4
-font-semibold
-hover:bg-yellow-600
-transition
-"
->
-{
-service.isActive
-?
-"🔴 Deactivate Service"
-:
-"🟢 Activate Service"
-}
-</button>
-
-
-<button
-className="
-xl:col-span-3
-bg-red-600
-text-white
-rounded-xl
-py-4
-font-semibold
-hover:bg-red-700
-transition
-"
->
-🗑 Delete Service
-</button>
-
-</div>
-
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+              <p className="text-gray-500 text-sm">Last Updated</p>
               <p>
                 {service.updatedAt
                   ? new Date(service.updatedAt).toLocaleDateString()
                   : "-"}
               </p>
-
             </div>
-
           </div>
 
-        </div>
+          {/* SERVICE MANAGEMENT */}
+          <div className="mt-10 border-t pt-8">
+            <h2 className="text-2xl font-bold">Service Management</h2>
 
+            <p className="text-gray-500 mt-2">
+              Manage the service from one place.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mt-8">
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl py-4 font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                ✏ Edit Service
+              </button>
+
+              <button
+                onClick={() => setShowPriceModal(true)}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-2xl py-4 font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                💰 Update Price
+              </button>
+
+              <button
+                onClick={() => setShowDurationModal(true)}
+                className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white rounded-2xl py-4 font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                ⏱ Update Duration
+              </button>
+
+              <button
+                onClick={() => setShowDescriptionModal(true)}
+                className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-2xl py-4 font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                📝 Update Description
+              </button>
+
+              <button
+                onClick={() => setShowImageModal(true)}
+                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-2xl py-4 font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                🖼 Change Image
+              </button>
+
+              <button
+                onClick={() => setShowStatusModal(true)}
+                className={`rounded-2xl py-4 font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300 ${
+                  service?.isActive
+                    ? "bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700"
+                    : "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                }`}
+              >
+                {service?.isActive ? "🔴 Deactivate Service" : "🟢 Activate Service"}
+              </button>
+
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="xl:col-span-3 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white rounded-2xl py-4 font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                🗑 Delete Service
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <EditServiceModal
+        open={showEditModal}
+        service={service}
+        onClose={() => setShowEditModal(false)}
+        onSave={updateService}
+      />
+
+      <PriceModal
+        open={showPriceModal}
+        service={service}
+        onClose={() => setShowPriceModal(false)}
+        onSave={updateService}
+      />
+
+      <DurationModal
+        open={showDurationModal}
+        service={service}
+        onClose={() => setShowDurationModal(false)}
+        onSave={updateService}
+      />
+
+      <DescriptionModal
+        open={showDescriptionModal}
+        service={service}
+        onClose={() => setShowDescriptionModal(false)}
+        onSave={updateService}
+      />
+
+      <ImageModal
+        open={showImageModal}
+        service={service}
+        onClose={() => setShowImageModal(false)}
+        onSave={updateImage}
+      />
+
+      <StatusModal
+        open={showStatusModal}
+        service={service}
+        onClose={() => setShowStatusModal(false)}
+        onSave={updateService}
+      />
+
+      <DeleteModal
+        open={showDeleteModal}
+        service={service}
+        onClose={() => setShowDeleteModal(false)}
+        onDelete={deleteService}
+      />
     </div>
   );
 }

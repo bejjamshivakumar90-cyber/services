@@ -57,10 +57,15 @@ export default function DashboardPage() {
       const totalTechnicians = technicians.technicians?.length || 0;
       const totalBookings = bookings.bookings?.length || 0;
 
-      const pending = bookings.bookings?.filter((b: any) => b.status === "pending").length || 0;
-      const completed = bookings.bookings?.filter((b: any) => b.status === "completed").length || 0;
-      const cancelled = bookings.bookings?.filter((b: any) => b.status === "cancelled").length || 0;
+     const pending =
+  bookings.bookings?.filter((b: any) => b.status === "Pending").length || 0;
 
+const completed =
+  bookings.bookings?.filter((b: any) => b.status === "Completed").length || 0;
+
+const cancelled =
+  bookings.bookings?.filter((b: any) => b.status === "Cancelled").length || 0;
+  
       setStats({
         customers: totalCustomers,
         services: totalServices,
