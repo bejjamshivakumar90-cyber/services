@@ -204,21 +204,48 @@ export const getTechnicians = async (
     });
   }
 };
+       
+
 
 // =========================================
 // Get Technician By ID
 // =========================================
-export const getTechnicianById = async (
+// (Function implementation omitted or handled elsewhere)
+
+
+
+
+
+
+
+
+
+
+// ================================
+// UPDATE TECHNICIAN (ADMIN)
+// ===============================
+
+
+
+
+export const updateTechnician = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const technician = await Technician.findById(req.params.id).select('-password');
+    const technician = await Technician.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).select("-password");
 
     if (!technician) {
       res.status(404).json({
         success: false,
-        message: 'Technician not found',
+        message: "Technician not found",
       });
       return;
     }
@@ -228,11 +255,102 @@ export const getTechnicianById = async (
       technician,
     });
   } catch (error: any) {
-    console.error('Get Technician Error:', error);
+    console.error(error);
 
     res.status(500).json({
       success: false,
-      message: error.message || 'Failed to fetch technician',
+      message: error.message,
+    });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+// ================================
+// TOGGLE AVAILABILITY (ADMIN)
+// ================================
+
+
+
+
+
+export const toggleAvailability = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const technician = await Technician.findById(req.params.id);
+
+    if (!technician) {
+      res.status(404).json({
+        success: false,
+        message: "Technician not found",
+      });
+      return;
+    }
+
+    technician.isAvailable = !technician.isAvailable;
+
+    await technician.save();
+
+    res.status(200).json({
+      success: true,
+      technician,
+    });
+  } catch (error: any) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+
+
+
+// ================================
+// DELETE TECHNICIAN (ADMIN)
+// ================================
+
+
+
+export const deleteTechnician = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const technician = await Technician.findByIdAndDelete(
+      req.params.id
+    );
+
+    if (!technician) {
+      res.status(404).json({
+        success: false,
+        message: "Technician not found",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Technician deleted successfully",
+    });
+  } catch (error: any) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
@@ -271,6 +389,7 @@ export const getTechnicianProfile = async (
     });
   };
 }
+
 // =========================================
 // Update Technician Profile
 // =========================================
@@ -445,4 +564,159 @@ export const getAssignedBookings = async (
     });
 
   }
+};
+
+// GET SINGLE TECHNICIAN BY ID
+export const getTechnicianById = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const technician = await Technician.findById(req.params.id);
+
+    if (!technician) {
+      return res.status(404).json({
+        success: false,
+        message: "Technician not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      technician,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+
+// CREATE TECHNICIAN
+export const createTechnician = async (
+  req: Request,
+  res: Response
+) => {
+
+  try {
+
+    const {
+      name,
+      email,
+      phone,
+      password,
+      profession,
+      experience,
+      city,
+      state
+    } = req.body;
+
+
+    if (
+      !name ||
+      !email ||
+      !phone ||
+      !password ||
+      !profession
+    ) {
+
+      return res.status(400).json({
+        success:false,
+        message:"Required fields missing"
+      });
+
+    }
+
+
+
+    const existingTechnician =
+      await Technician.findOne({
+        email
+      });
+
+
+
+    if(existingTechnician){
+
+      return res.status(400).json({
+        success:false,
+        message:"Technician already exists"
+      });
+
+    }
+
+
+
+
+    const hashedPassword =
+      await bcrypt.hash(password,10);
+
+
+
+    const technician =
+      await Technician.create({
+
+        name,
+
+        email,
+
+        phone,
+
+        password:hashedPassword,
+
+        profession,
+
+        experience:Number(experience) || 0,
+
+        city,
+
+        state,
+
+
+        photo:req.file
+        ? `/uploads/${req.file.filename}`
+        : "",
+
+
+        isVerified:false,
+
+        isAvailable:true
+
+      });
+
+
+
+
+
+    return res.status(201).json({
+
+      success:true,
+
+      message:"Technician created successfully",
+
+      technician
+
+    });
+
+
+
+  }
+  catch(error:any){
+
+    console.log(error);
+
+
+    return res.status(500).json({
+
+      success:false,
+
+      message:error.message
+
+    });
+
+  }
+
 };

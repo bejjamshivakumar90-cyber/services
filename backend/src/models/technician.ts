@@ -7,6 +7,12 @@ export interface ITechnician extends Document {
   password: string;
   profession: string;
   experience: number;
+  address: string;
+state: string;
+pincode: string;
+profileImage: string;
+documents: string[];
+isVerified: boolean;
   city: string;
   isAvailable: boolean;
   rating: number;
@@ -45,10 +51,43 @@ const technicianSchema = new Schema<ITechnician>(
       required: true,
     },
 
+    // removed duplicate 'photo' field to match ITechnician interface (use profileImage instead)
+
     experience: {
       type: Number,
       default: 0,
     },
+
+address: {
+  type: String,
+  default: "",
+},
+
+state: {
+  type: String,
+  default: "",
+},
+
+pincode: {
+  type: String,
+  default: "",
+},
+
+profileImage: {
+  type: String,
+  default: "",
+},
+
+documents: {
+  type: [String],
+  default: [],
+},
+
+isVerified: {
+  type: Boolean,
+  default: false,
+},
+
 
     city: {
       type: String,
